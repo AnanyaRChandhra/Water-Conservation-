@@ -1,0 +1,94 @@
+import pandas as pd
+import datetime
+import smtplib
+from email.mime.text import MIMEText
+
+# Constants
+DATA_FILE = 'water_usage.csv'
+USAGE_LIMIT = 100  # Example threshold for alerts
+
+# Load data
+def load_data():
+    try:
+        return pd.read_csv(DATA_FILE)
+    except FileNotFoundError:
+        return pd.DataFrame(columns=['date', 'usage'])
+
+# Save data
+def save_data(df):
+    df.to_csv(DATA_FILE, index=False)
+
+# Add water usage entry
+def add_usage(usage):
+    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    df = load_data()
+    new_entry = pd.DataFrame([[date_str, usage]], columns=['date', 'usage'])
+    df = pd.concat([df, new_entry], ignore_index=True)
+    save_data(df)
+    check_usage(usage)
+    print("Water usage added successfully!")
+
+# Check if usage exceeds limit and send alert
+def check_usage(usage):
+    if usage > USAGE_LIMIT:
+        send_alert(usage)
+
+# Send email alert (replace with your email credentials)
+def send_alert(usage):
+    sender_email = "your_email@example.com"
+    receiver_email = "receiver_email@example.com"
+    subject = "Water Usage Alert"
+    body = f"Your water usage of {usage} liters has exceeded the limit of {USAGE_LIMIT} liters."
+    
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    
+    try:
+        with smtplib.SMTP('smtp.example.com', 587) as server:
+            server.starttls()
+            server.login(sender_email, 'your_password')
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        print("Alert email sent!")
+    except Exception as e:
+        print(f"Failed to send alert email: {e}")
+
+# Display water conservation tips
+def display_tips():
+    tips = [
+        "Fix leaky faucets and pipes.",
+        "Take shorter showers.",
+        "Turn off the tap while brushing your teeth.",
+        "Use a broom to clean driveways and sidewalks instead of a hose.",
+        "Collect rainwater for gardening."
+    ]
+    print("Water Conservation Tips:")
+    for tip in tips:
+        print(f"- {tip}")
+
+# Main menu
+def main():
+    while True:
+        print("\nWater Conservation App")
+        print("1. Add Water Usage")
+        print("2. View Water Usage Data")
+        print("3. Display Conservation Tips")
+        print("4. Exit")
+        choice = input("Enter your choice: ")
+        
+        if choice == '1':
+            usage = float(input("Enter water usage in liters: "))
+            add_usage(usage)
+        elif choice == '2':
+            df = load_data()
+            print(df)
+        elif choice == '3':
+            display_tips()
+        elif choice == '4':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
